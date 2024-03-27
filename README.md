@@ -28,7 +28,7 @@ This is done as such:
     guard let module: ISOModule = ISOModule(path: path) else { return }
     for record: ISORecord in module.records {
         for field: ISOField in record.fields {
-            for row: ISORow = field.rows {
+            for row: ISORow in field.rows {
                 for value: ISOValue in row.values {
     }}}}
 ```
