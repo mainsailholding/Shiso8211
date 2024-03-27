@@ -25,11 +25,11 @@ The initial ISO8211 spec was published in 1985; the latest version was published
 This is done as such:
 
 ```swift
-    do {
-        let fileHandle: FileHandle = try FileHandle.init(forReadingFrom: URL(fileURLWithPath: path))
-        guard let module: ISOModule = ISOModule(fileHandle: fileHandle) else { return }
-    }
-    catch { print("\(error)") }
+    guard let module: ISOModule = ISOModule(path: path) else { return }
+    for record: ISORecord in module.records {
+        for field: ISOField in record.fields {
+            for row: ISORow = field.rows {
+                for value: ISOValue in row.values {
 ```
 
 Once instantiated the ISOModule object will have the full file loaded and the ISOFieldDef, ISOSubfieldDef, ISORecord, ISOField, ISORow and ISOValue objects can be traversed as expected.
