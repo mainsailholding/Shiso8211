@@ -8,25 +8,15 @@
 
 import Foundation
 
-/* ============================================================================
- 
- The ISO8211 spec was intended to be a genralized binary file spec, but in
- reality it seems to have only been used for the IHO S-57 spec and is
- being dropped in favor of XML for S-100 and beyond.
- 
- As such much of the spec is vesitgal.  In the case of the header only the
- recordLength, fieldAreaStart, sizeFieldLength, sizeFieldPosition and
- sizeFieldTag are used.  All are fields are fixed.
- 
- ============================================================================ */
-
 public class ISOModule: Codable {
     let leader: ISOLeader
     public let fieldDefs: [ISOFieldDef]
     public var records: [ISORecord] = []
     
-    public init?(fileHandle: FileHandle) {
+    public init?(path: String) {
         do {
+            let fileHandle: FileHandle = try FileHandle.init(forReadingFrom: URL(fileURLWithPath: path))
+            
             // Leader ==============================================================================
             var data: Data = try fileHandle.read(upToCount: ISOModule.LEADER_SIZE)!
             leader = ISOLeader(data: data)
