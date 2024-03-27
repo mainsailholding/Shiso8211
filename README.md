@@ -30,6 +30,7 @@ This is done as such:
         for field: ISOField in record.fields {
             for row: ISORow = field.rows {
                 for value: ISOValue in row.values {
+    }}}}
 ```
 
 Once instantiated the ISOModule object will have the full file loaded and the ISOFieldDef, ISOSubfieldDef, ISORecord, ISOField, ISORow and ISOValue objects can be traversed as expected.
