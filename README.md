@@ -16,7 +16,7 @@ Or from Xcode go to `File/Add Packages` and enter the URL: `https://github.com/a
 
 ### About
 
-The ISO8211 spec was intended to be a generalized binary file spec, but in reality it seems to have largely been used only for the IHO S57.  (ISO8211 is being dropped in favor of XML for S-100 and beyond.)
+The ISO8211 spec was intended to be a generalized binary file spec, but in reality it seems to have largely been used only for the IHO S57.  (ISO8211 is being dropped in favor of XML for IHO S100 and beyond.)
 
 This implementation signficantly referenced Frank Warmerdam's C++ library and got its start from [Chris Alford's](https://github.com/chrisvalford) Swift based [ISO8211](https://github.com/chrisvalford/ISO8211).  As such this is not a generalized ISO8211 reader but rather has been tuned only on IHO S57 files.
 
