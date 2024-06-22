@@ -91,8 +91,14 @@ public class ISOSubfieldDef: Codable {
         }
     }
     
-    func load(from data: Data, into value: ISOValue) -> Int {
-        let dataWidth: Int = isFixedWidth ? formatWidth : data.firstIndex(of: ISOModule.DDF_UNIT_TERMINATOR)! - data.startIndex
+    func load(from data: Data, into value: ISOValue) throws -> Int {
+        let dataWidth: Int
+        if isFixedWidth { dataWidth = formatWidth }
+        else {
+            guard let firstIndex: Int = data.firstIndex(of: ISOModule.DDF_UNIT_TERMINATOR) else { throw ISOError() }
+            dataWidth = firstIndex - data.startIndex
+        }
+        
         /* =========================================================================================
          The new Data instance is created here instead of just passing the slice, in order to ensure
          byte alignment.  Without data alignment (startIndex % 2, % 4 == 0) $0.load will crash.

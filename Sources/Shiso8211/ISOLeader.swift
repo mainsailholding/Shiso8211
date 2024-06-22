@@ -22,21 +22,37 @@ public class ISOLeader: Codable {
     let sizeFieldPosition: Int
     let sizeFieldTag: Int
     
-    init(data: Data) {
+    init?(data: Data) {
         let ascii: String = String(bytes: data, encoding: .ascii)!
-        recordLength                    = Int(ascii[0...4])!
-        interchangeLevel                = Int(ascii[5]) ?? 0        // "3" - unused
-        leaderIdentifier                = ascii[6]                  // "L" - unused
-        inlineCodeExtensionIndicator    = ascii[7]                  // "E" - unused
-        versionNumber                   = Int(ascii[8]) ?? 0        // "1" - unused
-        appIndicator                    = ascii[9]                  // " " - unused
-        fieldControlLength              = Int(ascii[10...11]) ?? 0  // "09" - fixed
-        fieldAreaStart                  = Int(ascii[12...16])!
-        extendedCharSet                 = ascii[17...19]            // " ! " - unused
-        sizeFieldLength                 = Int(ascii[20])!
-        sizeFieldPosition               = Int(ascii[21])!
-                                       // ascii[22]                 // "0" - reserved for future use
-        sizeFieldTag                    = Int(ascii[23])!
+
+        guard let recordLength                  = Int(ascii[0...4]),
+              let fieldAreaStart                = Int(ascii[12...16]),
+              let sizeFieldLength               = Int(ascii[20]),
+              let sizeFieldPosition             = Int(ascii[21]),
+              let sizeFieldTag                  = Int(ascii[23])
+        else { return nil }
+
+        let interchangeLevel              = Int(ascii[5]) ?? 0
+        let leaderIdentifier              = ascii[6]                  // "L" - unused
+        let inlineCodeExtensionIndicator  = ascii[7]                  // "E" - unused
+        let versionNumber                 = Int(ascii[8]) ?? 0        // "1" - unused
+        let appIndicator                  = ascii[9]                  // " " - unused
+        let fieldControlLength            = Int(ascii[10...11]) ?? 0  // "09" - fixed
+        let extendedCharSet               = ascii[17...19]            // " ! " - unused
+                                               // ascii[22]           // "0" - reserved for future use
+        
+        self.recordLength = recordLength
+        self.interchangeLevel = interchangeLevel
+        self.leaderIdentifier = leaderIdentifier
+        self.inlineCodeExtensionIndicator = inlineCodeExtensionIndicator
+        self.versionNumber = versionNumber
+        self.appIndicator = appIndicator
+        self.fieldControlLength = fieldControlLength
+        self.fieldAreaStart = fieldAreaStart
+        self.extendedCharSet = extendedCharSet
+        self.sizeFieldLength = sizeFieldLength
+        self.sizeFieldPosition = sizeFieldPosition
+        self.sizeFieldTag = sizeFieldTag
     }
     
     var fieldEntryLength: Int { sizeFieldTag + sizeFieldLength + sizeFieldPosition }

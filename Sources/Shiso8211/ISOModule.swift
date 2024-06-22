@@ -18,9 +18,10 @@ public class ISOModule: Codable {
             let fileHandle: FileHandle = try FileHandle.init(forReadingFrom: URL(fileURLWithPath: path))
             
             // Leader ==============================================================================
-            var data: Data = try fileHandle.read(upToCount: ISOModule.LEADER_SIZE)!
-            leader = ISOLeader(data: data)
-            
+            var data: Data! = try fileHandle.read(upToCount: ISOModule.LEADER_SIZE)
+            guard data != nil, let leader = ISOLeader(data: data) else { return nil }
+            self.leader = leader
+
             // Field Entries =======================================================================
             data = try fileHandle.read(upToCount: leader.fieldAreaStart - ISOModule.LEADER_SIZE)!
             var fieldDefs: [ISOFieldDef] = []

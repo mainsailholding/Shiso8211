@@ -26,7 +26,7 @@ public class ISOField: Codable {
         position = Int(ascii[s..<e])!
     }
         
-    func load(module: ISOModule, data: Data) {
+    func load(module: ISOModule, data: Data) throws {
         self.data = data
         let fieldDef: ISOFieldDef = module.fieldDef(for: tag)
         var i: Int = 0
@@ -35,7 +35,7 @@ public class ISOField: Codable {
             let row: ISORow = ISORow()
             for subfieldDef: ISOSubfieldDef in fieldDef.subfieldDefs {
                 let value: ISOValue = ISOValue(name: subfieldDef.tag)
-                i += subfieldDef.load(from: data[(data.startIndex+i)...], into: value)
+                i += try subfieldDef.load(from: data[(data.startIndex+i)...], into: value)
                 row.values.append(value)
             }
             rows.append(row)

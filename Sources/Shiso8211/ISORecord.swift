@@ -16,8 +16,8 @@ public class ISORecord: Codable {
         do {
             // Leader ==============================================================================
             var data: Data! = try fileHandle.read(upToCount: ISOModule.LEADER_SIZE)
-            if data == nil { return nil }
-            leader = ISOLeader(data: data)
+            guard data != nil, let leader = ISOLeader(data: data) else { return nil }
+            self.leader = leader
             
             // Fields ==============================================================================
             data = try fileHandle.read(upToCount: leader.fieldAreaStart - ISOModule.LEADER_SIZE)!
@@ -31,8 +31,8 @@ public class ISORecord: Codable {
             
             // Field Data ==========================================================================
             data = try fileHandle.read(upToCount: leader.recordLength - leader.fieldAreaStart)!
-            self.fields.forEach {
-                $0.load(module: module, data: data[$0.position..<($0.position+$0.length)])
+            try self.fields.forEach {
+                try $0.load(module: module, data: data[$0.position..<($0.position+$0.length)])
             }
         }
         catch { return nil }
