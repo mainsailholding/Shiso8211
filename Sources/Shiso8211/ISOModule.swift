@@ -50,6 +50,6 @@ public class ISOModule: Codable {
     
 // Static ==========================================================================================
     static let LEADER_SIZE: Int = 24
-    static let DDF_FIELD_TERMINATOR: UInt8 = 30
-    static let DDF_UNIT_TERMINATOR: UInt8 = 31
+    static let DDF_FIELD_TERMINATOR: UInt8 = 0x1E
+    static let DDF_UNIT_TERMINATOR: UInt8 = 0x1F
 }

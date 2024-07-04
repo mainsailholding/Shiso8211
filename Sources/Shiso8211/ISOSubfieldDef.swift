@@ -78,24 +78,20 @@ public class ISOSubfieldDef: Codable {
         }
     }
     
-    func width(data: Data) -> Int {
-        guard data.count > 0 else { return 0 }
+    func width(data: Data, encoding: Encoding) -> Int {
+        guard !data.isEmpty else { return 0 }
         if isFixedWidth { return min(formatWidth, data.count) }
-        else {
-            var width: Int = 0
-            while width < data.count && data[data.startIndex+width] != ISOModule.DDF_UNIT_TERMINATOR {
-                if 32...127 ~= data[data.startIndex] && data[data.startIndex+width] == ISOModule.DDF_FIELD_TERMINATOR { break }
-                width += 1
-            }
-            return width + (data.count == 0 ? 0 : 1)
-        }
+        if let range = data.range(of: encoding.unitTerminator) { return range.lowerBound + encoding.width }
+        return data.count
     }
     
-    func load(from data: Data, into value: ISOValue) throws -> Int {
+    func load(from data: Data, into value: ISOValue, encoding: Encoding) throws -> Int {
         let dataWidth: Int
         if isFixedWidth { dataWidth = formatWidth }
         else {
-            guard let firstIndex: Int = data.firstIndex(of: ISOModule.DDF_UNIT_TERMINATOR) else { throw ISOError() }
+            guard let firstIndex: Int = data.range(of: encoding.unitTerminator)?.lowerBound else {
+                throw ISOError(kind: .terminatorNotFound)
+            }
             dataWidth = firstIndex - data.startIndex
         }
         
@@ -115,14 +111,13 @@ public class ISOSubfieldDef: Codable {
         case .double: value.double = valueData.withUnsafeBytes { $0.load(as: Double.self) }
         case .string:
             guard let stringType else { fatalError() }
-            let string: String = String(data: valueData, encoding: .ascii) ?? ""
             switch stringType {
-            case .string: value.string = string
-            case .int: value.int32 = Int32(string) ?? 0
-            case .double: value.double = Double(string) ?? 0
+            case .string: value.string = String(data: valueData, encoding: encoding == .oneByte ? .utf8 : .utf16) ?? ""
+            case .int: value.int32 = Int32(String(data: valueData, encoding: .ascii) ?? "0") ?? 0
+            case .double: value.double = Double(String(data: valueData, encoding: .ascii) ?? "0") ?? 0
             }
         case .binary: value.binary = [UInt8](valueData)
         }
-        return dataWidth + (isFixedWidth ? 0 : 1)
+        return dataWidth + (isFixedWidth ? 0 : encoding.width)
     }
 }

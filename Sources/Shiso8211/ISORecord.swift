@@ -31,8 +31,9 @@ public class ISORecord: Codable {
             
             // Field Data ==========================================================================
             data = try fileHandle.read(upToCount: leader.recordLength - leader.fieldAreaStart)!
-            try self.fields.forEach {
-                try $0.load(module: module, data: data[$0.position..<($0.position+$0.length)])
+            self.fields.forEach {
+                do { try $0.load(module: module, data: data[$0.position..<($0.position+$0.length)]) }
+                catch { print("Shiso8211 Error [tag:\($0.tag)]: \(error)") }
             }
         }
         catch { return nil }
