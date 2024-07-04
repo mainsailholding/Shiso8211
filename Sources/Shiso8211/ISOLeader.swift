@@ -39,7 +39,7 @@ public class ISOLeader: Codable {
         let appIndicator                  = ascii[9]                  // " " - unused
         let fieldControlLength            = Int(ascii[10...11]) ?? 0  // "09" - fixed
         let extendedCharSet               = ascii[17...19]            // " ! " - unused
-                                               // ascii[22]           // "0" - reserved for future use
+                                         // ascii[22]                 // "0" - reserved for future use
         
         self.recordLength = recordLength
         self.interchangeLevel = interchangeLevel

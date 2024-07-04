@@ -8,4 +8,7 @@
 
 import Foundation
 
-class ISOError: Error {}
+struct ISOError: Error {
+    enum Kind { case terminatorNotFound }
+    let kind: Kind
+}

@@ -8,6 +8,25 @@
 
 import Foundation
 
+enum Encoding {
+    case oneByte, twoByteLittle, twoByteBig
+    func terminator(_ value: UInt8) -> Data {
+        switch self {
+        case .oneByte:          return Data([value])
+        case .twoByteLittle:    return Data([value, 0x00])
+        case .twoByteBig:       return Data([0x00, value])
+        }
+    }
+    var unitTerminator: Data { terminator(ISOModule.DDF_UNIT_TERMINATOR) }
+    var fieldTerminator: Data { terminator(ISOModule.DDF_FIELD_TERMINATOR) }
+    var width: Int { self == .oneByte ? 1 : 2 }
+    static func infer(from data: Data) -> Encoding {
+        if data.suffix(2) == Data([0x1E, 0x00]) { return .twoByteLittle }
+        else if data.suffix(2) == Data([0x00, 0x1E]) { return .twoByteBig }
+        return .oneByte
+    }
+}
+
 public class ISOField: Codable {
     public let tag: String
     public let length: Int
@@ -30,12 +49,14 @@ public class ISOField: Codable {
         self.data = data
         let fieldDef: ISOFieldDef = module.fieldDef(for: tag)
         var i: Int = 0
+
+        let encoding: Encoding = (fieldDef.isRepeatable && !fieldDef.isFixedWidth) ? .infer(from: data) : .oneByte
         
-        for _: Int in 0..<fieldDef.noOfRows(data: data) {
+        for _: Int in 0..<fieldDef.noOfRows(data: data, encoding: encoding) {
             let row: ISORow = ISORow()
             for subfieldDef: ISOSubfieldDef in fieldDef.subfieldDefs {
                 let value: ISOValue = ISOValue(name: subfieldDef.tag)
-                i += try subfieldDef.load(from: data[(data.startIndex+i)...], into: value)
+                i += try subfieldDef.load(from: data[(data.startIndex+i)...], into: value, encoding: encoding)
                 row.values.append(value)
             }
             rows.append(row)

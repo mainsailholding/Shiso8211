@@ -103,7 +103,7 @@ public class ISOFieldDef: Codable {
         for i in 0..<subfieldDefs.count { subfieldDefs[i].format = formats[i] }
     }
     
-    func noOfRows(data: Data) -> Int {
+    func noOfRows(data: Data, encoding: Encoding) -> Int {
         guard isRepeatable else { return 1 }
         
         if let fixedWidth { return data.count / fixedWidth }
@@ -113,9 +113,9 @@ public class ISOFieldDef: Codable {
         repeat {
             rows += 1
             for subfieldDef: ISOSubfieldDef in subfieldDefs {
-                i += subfieldDef.width(data: data.advanced(by: i))
+                i += subfieldDef.width(data: data.advanced(by: i), encoding: encoding)
             }
-        } while i < data.count - 1
+        } while i < data.count - encoding.width
         
         return rows
     }
