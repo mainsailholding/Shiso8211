@@ -18,6 +18,7 @@ public class ISOFieldDef: Codable {
     
     public var structType: StructType = .elementary
     public var dataType: DataType = .charString
+    public var encoding: Encoding = .oneByte
     public var name: String = ""
     public var array: String = ""
     public var format: String = ""
@@ -62,6 +63,7 @@ public class ISOFieldDef: Codable {
         
         structType = StructType(rawValue: ascii.toInt(0..<1))!
         dataType = DataType(rawValue: ascii.toInt(1..<2))!
+        encoding = Encoding.fromEscape(ascii[6...8])
         
         var index: Int = leader.fieldControlLength
         name = field(ascii: ascii, from: index)
@@ -103,7 +105,7 @@ public class ISOFieldDef: Codable {
         for i in 0..<subfieldDefs.count { subfieldDefs[i].format = formats[i] }
     }
     
-    func noOfRows(data: Data, encoding: Encoding) -> Int {
+    func noOfRows(data: Data/*, encoding: Encoding*/) -> Int {
         guard isRepeatable else { return 1 }
         
         if let fixedWidth { return data.count / fixedWidth }
