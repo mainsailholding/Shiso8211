@@ -23,9 +23,8 @@ public class ISOLeader: Codable {
     let sizeFieldTag: Int
     
     init?(data: Data) {
-        let ascii: String = String(bytes: data, encoding: .ascii)!
-
-        guard let recordLength                  = Int(ascii[0...4]),
+        guard let ascii: String = String(bytes: data, encoding: .ascii),
+              let recordLength                  = Int(ascii[0...4]),
               let fieldAreaStart                = Int(ascii[12...16]),
               let sizeFieldLength               = Int(ascii[20]),
               let sizeFieldPosition             = Int(ascii[21]),

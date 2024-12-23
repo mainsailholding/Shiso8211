@@ -8,7 +8,7 @@
 
 import Foundation
 
-enum Encoding {
+public enum Encoding: Codable {
     case oneByte, twoByteLittle, twoByteBig
     func terminator(_ value: UInt8) -> Data {
         switch self {
@@ -24,6 +24,10 @@ enum Encoding {
         if data.suffix(2) == Data([0x1E, 0x00]) { return .twoByteLittle }
         else if data.suffix(2) == Data([0x00, 0x1E]) { return .twoByteBig }
         return .oneByte
+    }
+    static func fromEscape(_ ascii: String) -> Encoding {
+        if ascii == "%/A" { return .twoByteBig }
+        else { return .oneByte }
     }
 }
 
@@ -50,13 +54,13 @@ public class ISOField: Codable {
         let fieldDef: ISOFieldDef = module.fieldDef(for: tag)
         var i: Int = 0
 
-        let encoding: Encoding = (fieldDef.isRepeatable && !fieldDef.isFixedWidth) ? .infer(from: data) : .oneByte
+//        let encoding: Encoding = (fieldDef.isRepeatable && !fieldDef.isFixedWidth) ? .infer(from: data) : .oneByte
         
-        for _: Int in 0..<fieldDef.noOfRows(data: data, encoding: encoding) {
+        for _: Int in 0..<fieldDef.noOfRows(data: data/*, encoding: encoding*/) {
             let row: ISORow = ISORow()
             for subfieldDef: ISOSubfieldDef in fieldDef.subfieldDefs {
                 let value: ISOValue = ISOValue(name: subfieldDef.tag)
-                i += try subfieldDef.load(from: data[(data.startIndex+i)...], into: value, encoding: encoding)
+                i += try subfieldDef.load(from: data[(data.startIndex+i)...], into: value, encoding: fieldDef.encoding)
                 row.values.append(value)
             }
             rows.append(row)
