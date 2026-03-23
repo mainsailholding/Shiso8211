@@ -41,7 +41,10 @@ public class ISOModule: Codable {
                 records.append(record)
             }
         }
-        catch { return nil }
+        catch {
+            print("error: \(error)")
+            return nil
+        }
     }
     
     public func fieldDef(for tag: String) -> ISOFieldDef! {

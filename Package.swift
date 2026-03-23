@@ -10,8 +10,7 @@ let package = Package(
     products: [
         .library(name: "Shiso8211", targets: ["Shiso8211"]),
     ],
-    dependencies: [
-    ],
+    dependencies: [],
     targets: [
         .target(name: "Shiso8211", dependencies: []),
     ]
