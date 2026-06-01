@@ -87,12 +87,24 @@ public class ISOSubfieldDef: Codable {
     
     func load(from data: Data, into value: ISOValue, encoding: Encoding) throws -> Int {
         let dataWidth: Int
-        if isFixedWidth { dataWidth = formatWidth }
-        else {
-            guard let firstIndex: Int = data.range(of: encoding.unitTerminator)?.lowerBound else {
-                throw ISOError(kind: .terminatorNotFound)
-            }
+        let terminatorWidth: Int
+        if isFixedWidth {
+            dataWidth = formatWidth
+            terminatorWidth = 0
+        }
+        else if let firstIndex: Int = data.range(of: encoding.unitTerminator)?.lowerBound {
             dataWidth = firstIndex - data.startIndex
+            terminatorWidth = encoding.width
+        }
+        else {
+            // No unit terminator — fall back to using the remaining bytes as the subfield
+            // value. This matches the lenient behavior in `width()` and lets us recover from
+            // non-standard ENC writers (notably some Canadian charts) that omit the trailing
+            // unit terminator on the last variable-width subfield of a record's final field.
+            // Without this, the entire field's rows would be dropped and any downstream
+            // reader (e.g. NATF national-language attributes) would silently see no data.
+            dataWidth = data.count
+            terminatorWidth = 0
         }
         
         /* =========================================================================================
@@ -118,6 +130,6 @@ public class ISOSubfieldDef: Codable {
             }
         case .binary: value.binary = [UInt8](valueData)
         }
-        return dataWidth + (isFixedWidth ? 0 : encoding.width)
+        return dataWidth + terminatorWidth
     }
 }
