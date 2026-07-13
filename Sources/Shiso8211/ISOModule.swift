@@ -16,7 +16,6 @@ public class ISOModule: Codable {
     public init?(path: String) {
         do {
             let fileHandle: FileHandle = try FileHandle.init(forReadingFrom: URL(fileURLWithPath: path))
-            defer { try? fileHandle.close() }
             
             // Leader ==============================================================================
             var data: Data! = try fileHandle.read(upToCount: ISOModule.LEADER_SIZE)
@@ -43,7 +42,7 @@ public class ISOModule: Codable {
             }
         }
         catch {
-            print("Shiso8211 ISOModule Error: [\(error)]")
+            print("ERROR Opening Catalog [\(error)]")
             return nil
         }
     }
