@@ -13,32 +13,53 @@ public class ISOModule: Codable {
     public let fieldDefs: [ISOFieldDef]
     public var records: [ISORecord] = []
     
-    public init?(path: String) {
+    /// A module read from a file.
+    public convenience init?(path: String) {
+        let fileHandle: FileHandle
+        do { fileHandle = try FileHandle(forReadingFrom: URL(fileURLWithPath: path)) }
+        catch {
+            print("Shiso8211 ISOModule Error: [\(error)]")
+            return nil
+        }
+        defer { try? fileHandle.close() }
+        self.init(read: { try fileHandle.read(upToCount: $0) })
+    }
+    /// A module read from memory: a file's bytes that never touch the disk (a chart opened from
+    /// its encrypted form, say).
+    public convenience init?(data: Data) {
+        var offset: Int = 0
+        self.init(read: { (count: Int) -> Data? in
+            guard offset < data.count else { return nil }
+            let end: Int = min(offset + max(count, 0), data.count)
+            defer { offset = end }
+            return Data(data[(data.startIndex + offset)..<(data.startIndex + end)])
+        })
+    }
+
+    /// `read` hands back the next bytes asked for (fewer at the end, nil once there are none),
+    /// indexed from 0.
+    init?(read: (Int) throws -> Data?) {
         do {
-            let fileHandle: FileHandle = try FileHandle.init(forReadingFrom: URL(fileURLWithPath: path))
-            defer { try? fileHandle.close() }
-            
             // Leader ==============================================================================
-            var data: Data! = try fileHandle.read(upToCount: ISOModule.LEADER_SIZE)
-            guard data != nil, let leader = ISOLeader(data: data) else { return nil }
+            guard let data: Data = try read(ISOModule.LEADER_SIZE), let leader = ISOLeader(data: data) else { return nil }
             self.leader = leader
 
             // Field Entries =======================================================================
-            data = try fileHandle.read(upToCount: leader.fieldAreaStart - ISOModule.LEADER_SIZE)!
+            guard let entries: Data = try read(leader.fieldAreaStart - ISOModule.LEADER_SIZE) else { return nil }
             var fieldDefs: [ISOFieldDef] = []
             var i: Int = 0
-            while data[i] != ISOModule.DDF_FIELD_TERMINATOR {
-                fieldDefs.append(ISOFieldDef(leader: leader, ascii: data.ascii(i..<(i+leader.fieldEntryLength))))
+            while i + leader.fieldEntryLength <= entries.count && entries[i] != ISOModule.DDF_FIELD_TERMINATOR {
+                fieldDefs.append(ISOFieldDef(leader: leader, ascii: entries.ascii(i..<(i+leader.fieldEntryLength))))
                 i += leader.fieldEntryLength
             }
             self.fieldDefs = fieldDefs
-            
+
             // Field Definitions ===================================================================
-            data = try fileHandle.read(upToCount: leader.recordLength - leader.fieldAreaStart)!
-            self.fieldDefs.forEach { $0.load(leader: leader, ascii: data.ascii($0.position..<($0.position+$0.length))) }
-            
+            guard let definitions: Data = try read(leader.recordLength - leader.fieldAreaStart) else { return nil }
+            self.fieldDefs.forEach { $0.load(leader: leader, ascii: definitions.ascii($0.position..<($0.position+$0.length))) }
+
             // Records =============================================================================
-            while let record: ISORecord = ISORecord(module: self, fileHandle: fileHandle) {
+            while let record: ISORecord = ISORecord(module: self, read: read) {
                 records.append(record)
             }
         }
