@@ -12,27 +12,30 @@ public class ISORecord: Codable {
     public let leader: ISOLeader
     public let fields: [ISOField]
     
-    public init?(module: ISOModule, fileHandle: FileHandle) {
+    public convenience init?(module: ISOModule, fileHandle: FileHandle) {
+        self.init(module: module, read: { try fileHandle.read(upToCount: $0) })
+    }
+    /// The module's next record, from `read` (see ISOModule.init(read:)); nil at the end.
+    init?(module: ISOModule, read: (Int) throws -> Data?) {
         do {
             // Leader ==============================================================================
-            var data: Data! = try fileHandle.read(upToCount: ISOModule.LEADER_SIZE)
-            guard data != nil, let leader = ISOLeader(data: data) else { return nil }
+            guard let data: Data = try read(ISOModule.LEADER_SIZE), let leader = ISOLeader(data: data) else { return nil }
             self.leader = leader
             
             // Fields ==============================================================================
-            data = try fileHandle.read(upToCount: leader.fieldAreaStart - ISOModule.LEADER_SIZE)!
+            guard let entries: Data = try read(leader.fieldAreaStart - ISOModule.LEADER_SIZE) else { return nil }
             var fields: [ISOField] = []
             var i: Int = 0
-            while data[i] != ISOModule.DDF_FIELD_TERMINATOR {
-                fields.append(ISOField(leader: leader, ascii: data.ascii(i..<(i+leader.fieldEntryLength))))
+            while i + leader.fieldEntryLength <= entries.count && entries[i] != ISOModule.DDF_FIELD_TERMINATOR {
+                fields.append(ISOField(leader: leader, ascii: entries.ascii(i..<(i+leader.fieldEntryLength))))
                 i += leader.fieldEntryLength
             }
             self.fields = fields
             
             // Field Data ==========================================================================
-            data = try fileHandle.read(upToCount: leader.recordLength - leader.fieldAreaStart)!
+            guard let values: Data = try read(leader.recordLength - leader.fieldAreaStart) else { return nil }
             self.fields.forEach {
-                do { try $0.load(module: module, data: data[$0.position..<($0.position+$0.length)]) }
+                do { try $0.load(module: module, data: values[$0.position..<($0.position+$0.length)]) }
                 catch { print("Shiso8211 Error [tag:\($0.tag)]: \(error)") }
             }
         }

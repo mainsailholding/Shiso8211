@@ -35,4 +35,6 @@ This is done as such:
     }
 ```
 
+A module can also be read from memory with `ISOModule(data:)`, for bytes that should never be written to disk, such as a chart decrypted only to be read.
+
 Once instantiated the ISOModule object will have the full file loaded and the ISOFieldDef, ISOSubfieldDef, ISORecord, ISOField, ISORow and ISOValue objects can be traversed as expected.
